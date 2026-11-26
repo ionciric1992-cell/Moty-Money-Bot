@@ -1,3 +1,4 @@
+
 import random
 
 HOOKS = [
@@ -42,20 +43,17 @@ HASHTAGS = [
 
 
 def generate_script(topic="Motivation"):
+    if not isinstance(topic, str):
+        topic = "Motivation"
+
     topic = topic.strip() or "Motivation"
-
-    hook = random.choice(HOOKS)
-    body = random.choice(BODIES)
-    cta = random.choice(CTAS)
-
-    hashtags = random.sample(HASHTAGS, 5)
 
     return {
         "topic": topic,
-        "hook": hook,
-        "body": body,
-        "cta": cta,
-        "hashtags": hashtags,
+        "hook": random.choice(HOOKS),
+        "body": random.choice(BODIES),
+        "cta": random.choice(CTAS),
+        "hashtags": random.sample(HASHTAGS, 5),
         "duration_seconds": 20,
     }
 
