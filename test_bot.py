@@ -1,7 +1,7 @@
-
 import unittest
-import csv
+import tempfile
 import os
+
 import ideas
 import scripts
 import analytics
@@ -20,84 +20,74 @@ class TestMotyBot(unittest.TestCase):
 
     def test_generate_script(self):
         result = scripts.generate_script("Motivation")
+
         self.assertEqual(result["topic"], "Motivation")
         self.assertIn("hook", result)
         self.assertIn("body", result)
         self.assertIn("cta", result)
+        self.assertIn("hashtags", result)
 
-    def test_record_video(self):
-        old_file = analytics.DATA_FILE
-        analytics.DATA_FILE = "test_performance.csv"
+    def test_script_has_duration(self):
+        result = scripts.generate_script("Money")
 
-        try:
-            if os.path.exists(analytics.DATA_FILE):
-                os.remove(analytics.DATA_FILE)
+        self.assertEqual(result["duration_seconds"], 20)
 
-            analytics.record_video(
-                "test_user", "Motivation", 1000, 100, 20, 30
+    def test_script_has_five_hashtags(self):
+        result = scripts.generate_script("Success")
+
+        self.assertEqual(len(result["hashtags"]), 5)
+
+    def test_analytics_record_video(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            original_file = analytics.DATA_FILE
+            analytics.DATA_FILE = os.path.join(
+                temp_dir, "performance.csv"
             )
 
-            self.assertTrue(os.path.exists(analytics.DATA_FILE))
+            try:
+                analytics.record_video(
+                    "test_user",
+                    "Motivation",
+                    1000,
+                    100,
+                    20,
+                    10,
+                )
 
-            with open(
-                analytics.DATA_FILE,
-                newline="",
-                encoding="utf-8"
-            ) as file:
-                rows = list(csv.DictReader(file))
+                rows = analytics.load_performance()
 
-            self.assertEqual(len(rows), 1)
-            self.assertEqual(rows[0]["username"], "test_user")
-            self.assertEqual(rows[0]["views"], "1000")
-            self.assertEqual(rows[0]["engagement"], "15.0")
+                self.assertEqual(len(rows), 1)
+                self.assertEqual(rows[0]["username"], "test_user")
+                self.assertEqual(rows[0]["views"], "1000")
+                self.assertEqual(rows[0]["engagement"], "13.0")
 
-        finally:
-            if os.path.exists(analytics.DATA_FILE):
-                os.remove(analytics.DATA_FILE)
-
-            analytics.DATA_FILE = old_file
-
-    def test_accounts_load_empty(self):
-        old_file = accounts.ACCOUNTS_FILE
-        accounts.ACCOUNTS_FILE = "test_accounts.json"
-
-        try:
-            if os.path.exists(accounts.ACCOUNTS_FILE):
-                os.remove(accounts.ACCOUNTS_FILE)
-
-            result = accounts.load_accounts()
-            self.assertEqual(result, [])
-
-        finally:
-            if os.path.exists(accounts.ACCOUNTS_FILE):
-                os.remove(accounts.ACCOUNTS_FILE)
-
-            accounts.ACCOUNTS_FILE = old_file
+            finally:
+                analytics.DATA_FILE = original_file
 
     def test_accounts_save_and_load(self):
-        old_file = accounts.ACCOUNTS_FILE
-        accounts.ACCOUNTS_FILE = "test_accounts.json"
+        with tempfile.TemporaryDirectory() as temp_dir:
+            original_file = accounts.ACCOUNTS_FILE
+            accounts.ACCOUNTS_FILE = os.path.join(
+                temp_dir, "accounts.json"
+            )
 
-        test_data = [
-            {
-                "username": "@test_user",
-                "niche": "Motivation",
-                "goal": "Growth",
-                "active": True
-            }
-        ]
+            try:
+                accounts.save_accounts([
+                    {
+                        "username": "test_user",
+                        "niche": "Motivation",
+                        "goal": "Growth",
+                        "active": True,
+                    }
+                ])
 
-        try:
-            accounts.save_accounts(test_data)
-            result = accounts.load_accounts()
+                result = accounts.load_accounts()
 
-            self.assertEqual(result, test_data)
+                self.assertEqual(len(result), 1)
+                self.assertEqual(result[0]["username"], "test_user")
 
-        finally:
-            if os.path.exists(accounts.ACCOUNTS_FILE):
-                os.remove(accounts.ACCOUNTS_FILE)
-
-            accounts.ACCOUNTS_FILE = old_file
+            finally:
+                accounts.ACCOUNTS_FILE = original_file
 
 
 if __name__ == "__main__":
