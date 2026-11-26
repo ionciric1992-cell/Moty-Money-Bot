@@ -1,3 +1,4 @@
+
 import csv
 import os
 from datetime import datetime
@@ -17,12 +18,10 @@ HEADERS = [
 
 
 def record_video(username, topic, views, likes, comments, shares):
-    if not isinstance(views, int) or views < 0:
-        raise ValueError("Views must be a non-negative integer")
+    metrics = (views, likes, comments, shares)
 
-    if any(not isinstance(value, int) or value < 0
-           for value in (likes, comments, shares)):
-        raise ValueError("Engagement metrics must be non-negative integers")
+    if any(not isinstance(value, int) or value < 0 for value in metrics):
+        raise ValueError("Metrics must be non-negative integers")
 
     file_exists = os.path.exists(DATA_FILE)
     file_empty = file_exists and os.path.getsize(DATA_FILE) == 0
@@ -33,7 +32,7 @@ def record_video(username, topic, views, likes, comments, shares):
         if not file_exists or file_empty:
             writer.writerow(HEADERS)
 
-        engagement = 0
+        engagement = 0.0
         if views > 0:
             engagement = (likes + comments + shares) / views * 100
 
@@ -51,6 +50,9 @@ def record_video(username, topic, views, likes, comments, shares):
 
 def load_performance():
     if not os.path.exists(DATA_FILE):
+        return []
+
+    if os.path.getsize(DATA_FILE) == 0:
         return []
 
     with open(DATA_FILE, newline="", encoding="utf-8") as file:
@@ -71,8 +73,8 @@ def analyze_performance():
         print(
             f"{row.get('username', 'Unknown')} | "
             f"{row.get('topic', 'Unknown')} | "
-            f"{row.get('views', 0)} views | "
-            f"{row.get('engagement', 0)}% engagement"
+            f"{row.get('views', '0')} views | "
+            f"{row.get('engagement', '0')}% engagement"
         )
 
     return rows
