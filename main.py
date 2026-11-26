@@ -1,3 +1,4 @@
+
 from datetime import datetime
 
 from config import (
@@ -26,10 +27,10 @@ def show_daily_plan():
 
     print("\nTasks:")
     print("- Analyze content performance")
-    print("- Generate new content ideas")
+    print("- Find new content ideas")
     print("- Prepare video scripts")
     print("- Review TikTok accounts")
-    print(f"- Reports every {REPORT_INTERVAL_DAYS} days")
+    print(f"- Report every {REPORT_INTERVAL_DAYS} days")
 
     print("\nAutomatic posting: DISABLED")
 
@@ -37,36 +38,42 @@ def show_daily_plan():
 def show_ideas():
     print("\n--- Content Ideas ---")
 
-    try:
-        generated = ideas.generate_ideas(IDEAS_PER_DAY)
-
-        for i, idea in enumerate(generated, 1):
-            print(f"{i}. {idea}")
-
-    except Exception as error:
-        print(f"Error generating ideas: {error}")
+    for i, idea in enumerate(
+        ideas.generate_ideas(IDEAS_PER_DAY), 1
+    ):
+        print(f"{i}. {idea}")
 
 
 def create_script():
+    topic = input("Enter video topic: ").strip()
+
+    if not topic:
+        topic = "Motivation"
+
+    scripts.print_script(topic)
+
+
+def show_analytics():
+    analytics.analyze_performance()
+
+
+def show_accounts():
+    accounts.list_accounts()
+
+
+def record_video_stats():
+    print("\n--- Record Video Statistics ---")
+
+    username = input("TikTok username: ").strip()
+    topic = input("Video topic: ").strip()
+
+    if not username:
+        username = TIKTOK_USERNAME
+
+    if not topic:
+        topic = "General"
+
     try:
-        topic = input("Enter video topic: ").strip()
-
-        if not topic:
-            topic = "Motivation"
-
-        scripts.print_script(topic)
-
-    except Exception as error:
-        print(f"Error creating script: {error}")
-
-
-def record_performance():
-    print("\n--- Record Video Performance ---")
-
-    try:
-        username = input("Username: ").strip() or TIKTOK_USERNAME
-        topic = input("Video topic: ").strip() or "General"
-
         views = int(input("Views: "))
         likes = int(input("Likes: "))
         comments = int(input("Comments: "))
@@ -81,29 +88,10 @@ def record_performance():
             shares,
         )
 
-        print("Performance data saved successfully.")
+        print("\nStatistics saved successfully!")
 
-    except ValueError:
-        print("Error: Please enter valid non-negative numbers.")
-
-    except Exception as error:
-        print(f"Error recording performance: {error}")
-
-
-def show_analytics():
-    try:
-        analytics.analyze_performance()
-
-    except Exception as error:
-        print(f"Analytics error: {error}")
-
-
-def show_accounts():
-    try:
-        accounts.list_accounts()
-
-    except Exception as error:
-        print(f"Account error: {error}")
+    except ValueError as error:
+        print(f"\nInvalid input: {error}")
 
 
 def main_menu():
@@ -118,7 +106,7 @@ def main_menu():
         print("3. Create video script")
         print("4. Analyze performance")
         print("5. Show TikTok accounts")
-        print("6. Record video performance")
+        print("6. Record video statistics")
         print("0. Exit")
 
         choice = input("\nChoose option: ").strip()
@@ -139,7 +127,7 @@ def main_menu():
             show_accounts()
 
         elif choice == "6":
-            record_performance()
+            record_video_stats()
 
         elif choice == "0":
             print("Moty Money Bot stopped.")
